@@ -42,7 +42,7 @@ PIPE_VEL_X = -4
 PLAYER_MAX_VEL_Y = 10  # max vel along Y, max descend speed
 PLAYER_MIN_VEL_Y = -8  # min vel along Y, max ascend speed
 
-PLAYER_ACC_Y = 1       # players downward acceleration
+PLAYER_ACC_Y = 3       # players downward acceleration
 PLAYER_VEL_ROT = 3     # angular speed
 
 PLAYER_FLAP_ACC = -9   # players speed on flapping
@@ -98,6 +98,7 @@ class FlappyBirdLogic:
     def __init__(self,
                  screen_size: Tuple[int, int],
                  pipe_gap_size: int = 100) -> None:
+        random.seed(42)
         self._screen_width = screen_size[0]
         self._screen_height = screen_size[1]
 
@@ -109,6 +110,7 @@ class FlappyBirdLogic:
         self._base_shift = BASE_WIDTH - BACKGROUND_WIDTH
 
         self.score = 0
+        self.passed_pipe = False
         self._pipe_gap_size = pipe_gap_size
 
         # Generate 2 new pipes to add to upper_pipes and lower_pipes lists
@@ -209,12 +211,14 @@ class FlappyBirdLogic:
             return False
 
         # check for score
+        self.passed_pipe = False
         player_mid_pos = self.player_x + PLAYER_WIDTH / 2
         for pipe in self.upper_pipes:
             pipe_mid_pos = pipe['x'] + PIPE_WIDTH / 2
             if pipe_mid_pos <= player_mid_pos < pipe_mid_pos + 4:
                 self.score += 1
                 self.sound_cache = "point"
+                self.passed_pipe = True
 
         # player_index base_x change
         if (self._loop_iter + 1) % 3 == 0:

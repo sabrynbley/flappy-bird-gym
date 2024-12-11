@@ -138,12 +138,31 @@ class FlappyBirdEnvSimple(gym.Env):
         alive = self._game.update_state(action)
         obs = self._get_observation()
 
-        reward = 1
+        # reward = 1  # OG
+        reward = self.reward(alive, obs)
 
         done = not alive
         info = {"score": self._game.score}
 
         return obs, reward, done, info
+
+    def reward(self, alive, state):
+        """
+        Creates a reward value based on the action taken by the agent at a given state.
+
+        :param alive: A boolean if the agent is still alive. (True = alive, False = died)
+        :param state: The state of the agent. (horizontal distance to next pipe, vertical difference to gap)
+        :return: A reward value.
+        """
+        if not alive:  # if the agent died...
+            return 0
+        else:  # agent is still alive...
+            if self._game.passed_pipe:  # if agent passed a pipe...
+                return 100
+            else:
+                return 2 - (abs(state[0]) ** 2 + abs(state[1]) ** 2) ** 0.5
+                # return 1 - (abs(state[1]) ** 2)
+
 
     def reset(self):
         """ Resets the environment (starts a new game). """
