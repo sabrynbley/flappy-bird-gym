@@ -192,3 +192,12 @@ class FlappyBirdEnvSimple(gym.Env):
             pygame.display.quit()
             self._renderer = None
         super().close()
+
+    def get_game_score(self):
+        """
+        Returns the score of the game.
+
+        :return: Game score
+        """
+        return self._game.score
+
