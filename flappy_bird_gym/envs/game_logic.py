@@ -97,8 +97,12 @@ class FlappyBirdLogic:
 
     def __init__(self,
                  screen_size: Tuple[int, int],
+                 seed: bool = False,
                  pipe_gap_size: int = 100) -> None:
-        random.seed(42)
+
+        if seed:
+            random.seed(42)
+
         self._screen_width = screen_size[0]
         self._screen_height = screen_size[1]
 

@@ -68,6 +68,7 @@ class FlappyBirdEnvSimple(gym.Env):
 
     def __init__(self,
                  screen_size: Tuple[int, int] = (288, 512),
+                 seed: bool = False,
                  normalize_obs: bool = True,
                  pipe_gap: int = 100,
                  bird_color: str = "yellow",
@@ -77,6 +78,7 @@ class FlappyBirdEnvSimple(gym.Env):
         self.observation_space = gym.spaces.Box(-np.inf, np.inf,
                                                 shape=(2,),
                                                 dtype=np.float32)
+        self._seed = seed
         self._screen_size = screen_size
         self._normalize_obs = normalize_obs
         self._pipe_gap = pipe_gap
@@ -161,12 +163,12 @@ class FlappyBirdEnvSimple(gym.Env):
                 return 100
             else:
                 return 2 - (abs(state[0]) ** 2 + abs(state[1]) ** 2) ** 0.5
-                # return 1 - (abs(state[1]) ** 2)
 
 
     def reset(self):
         """ Resets the environment (starts a new game). """
         self._game = FlappyBirdLogic(screen_size=self._screen_size,
+                                     seed=self._seed,
                                      pipe_gap_size=self._pipe_gap)
         if self._renderer is not None:
             self._renderer.game = self._game

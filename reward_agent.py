@@ -5,94 +5,23 @@ from flappy_bird_gym.envs.flappy_bird_env_simple import FlappyBirdEnvSimple
 import agent
 import pickle
 
-RENDER_SPEED = 0.00001
 # Create agent
-agent_config = {'gamma': 0.7,              # the discount factor
+agent_config = {'gamma': 0.1,              # the discount factor
                 'train_epsilon': 0.5,            # the epsilon-greedy parameter for training
                 'eval_epsilon': 0.1,     # the epsilon-greedy parameter for evaluating
                 'alpha': 0.01,            # the learning rate
-                'hidden_size': 50,         # the hidden layer size
-                'buffer size': 1000,     # set the memory size
-                'B': 10,                    # set the batch size
+                'hidden_size': 5,         # the hidden layer size
+                'buffer size': 100,     # set the memory size
+                'B': 5,                    # set the batch size
                 'C': 20,                  # when to update the target approximator
-                'n_steps': 5,              # the number of steps to use to update
-                'epsilon_burnin': 200}     # when to start burning epsilon value
-bird_agent = agent.Agent(agent_config) #TODO
-# with open('baseline_agent.pkl', 'rb') as file:
-#     bird_agent = pickle.load(file)
+                'n_steps': 4,              # the number of steps to use to update
+                'epsilon_burnin': 750}     # when to start burning epsilon value
+agent = agent.Agent(agent_config)
 
 # Train agent
 print("Training Agent:")
 train_ep_score = []
-for episode in range(500):
-    env = FlappyBirdEnvSimple(bird_color="red", seed=False)
-    state = env.reset()
-
-    done = False
-    turns = 0
-    while not done:
-        turns += 1
-        env.render()
-
-        # Generate action
-        action = bird_agent.pi(state, bird_agent.epsilon_t(turns, episode))  #   bird_agent.config['train_epsilon']
-
-        # Evolve environment
-        update = env.step(action)
-        next_state, reward, done, __ = update
-        # if reward > 0:
-        #     reward = 1  # og always 1 (except when crashing) todo
-        reward = 1
-        time.sleep(RENDER_SPEED)
-
-        # Store experience
-        experience_t = dict()
-        experience_t['s_t'] = state.tolist()
-        experience_t['a_t'] = [action]
-        experience_t['s_a'] = np.array(experience_t['s_t'] + experience_t['a_t'])
-        experience_t['r_t+1'] = reward
-        experience_t['s_t+1'] = next_state
-        experience_t['done'] = done
-        bird_agent.memory.append(experience_t)
-
-        # Update state
-        state = next_state
-
-        if len(bird_agent.memory) > bird_agent.config['buffer size']:
-            bird_agent.memory.pop(0)  # remove oldest experience
-
-        if turns % bird_agent.config['n_steps'] == 0:  # time for update...
-            batch = bird_agent.make_batch()
-            X = batch[0]
-            y = batch[1]
-
-            bird_agent.update_Q(X, y)
-
-        if turns % bird_agent.config['C'] == 0:  # time to update target approximator
-            bird_agent.update_Q_prime()
-
-        if done:
-            env.render()
-            time.sleep(RENDER_SPEED)  # change to 0.5
-
-    train_ep_score.append(env.get_game_score())
-    if episode % 10 == 0:
-        print(episode, "- Score:", np.sum(train_ep_score))
-
-# Save the scores and trained agent to a file
-np.save("baseline_training.npy", train_ep_score)
-with open('baseline_agent1.pkl', 'wb') as file:
-    pickle.dump(bird_agent, file)
-
-# To load the list from the `.npy` file: loaded_list = np.load("baseline_training.npy").tolist()
-
-with open('baseline_agent1.pkl', 'rb') as file:
-    bird_agent = pickle.load(file)
-
-# Eval agent
-print("Testing Agent:")
-test_ep_score = []
-for episode in range(100):
+for episode in range(1000):
     env = FlappyBirdEnvSimple(bird_color="red", seed=False)
     state = env.reset()
     score = 0
@@ -104,14 +33,85 @@ for episode in range(100):
         env.render()
 
         # Generate action
-        action = bird_agent.pi(state, bird_agent.config['eval_epsilon'])
+        action = agent.pi(state, agent.epsilon_t(turns, episode))  #   agent.config['train_epsilon']
 
         # Evolve environment
         update = env.step(action)
         next_state, reward, done, __ = update
-        # if reward > 0:
-        #     reward = 1  # og always 1 (except when crashing) # todo
-        reward = 1
+        score += reward
+        time.sleep(0.0001)
+
+        # Store experience
+        experience_t = dict()
+        experience_t['s_t'] = state.tolist()
+        experience_t['a_t'] = [action]
+        experience_t['s_a'] = np.array(experience_t['s_t'] + experience_t['a_t'])
+        experience_t['r_t+1'] = reward
+        experience_t['s_t+1'] = next_state
+        experience_t['done'] = done
+        agent.memory.append(experience_t)
+
+        # Update state
+        state = next_state
+
+        if len(agent.memory) > agent_config['buffer size']:
+            agent.memory.pop(0)  # remove oldest experience
+
+        if turns % agent_config['n_steps'] == 0:  # time for update...
+            batch = agent.make_batch()
+            X = batch[0]
+            y = batch[1]
+
+            # initial_weights = {name: param.clone() for name, param in agent.Q.named_parameters()} # todo
+
+            agent.update_Q(X, y)
+
+            # Compare updated weights with initial weights
+            # for name, param in agent.Q.named_parameters():
+            #     print(f"Layer: {name}")
+            #     print(f"Initial weights:\n{initial_weights[name]}")
+            #     print(f"Updated weights:\n{param.data}")
+            #     print(f"Difference:\n{param.data - initial_weights[name]}") # todo
+
+        if turns % agent_config['C'] == 0:  # time to update target approximator
+            agent.update_Q_prime()
+
+        if done:
+            env.render()
+            time.sleep(0.0001)  # change to 0.5
+
+    train_ep_score.append(env.get_game_score())
+    if episode % 100 == 0:
+        print(episode, "- Score:", np.sum(train_ep_score))
+
+# Save the scores and trained agent to a file
+np.save("reward_training.npy", train_ep_score)
+with open('reward_agent.pkl', 'wb') as file:
+    pickle.dump(agent, file)
+
+# To load the list from the `.npy` file: loaded_list = np.load("baseline_training.npy").tolist()
+
+
+# Eval agent
+print("Testing Agent:")
+test_ep_score = []
+for episode in range(10):
+    env = FlappyBirdEnvSimple(bird_color="red", seed=False)
+    state = env.reset()
+    score = 0
+
+    done = False
+    turns = 0
+    while not done:
+        turns += 1
+        env.render()
+
+        # Generate action
+        action = agent.pi(state, agent.config['eval_epsilon'])
+
+        # Evolve environment
+        update = env.step(action)
+        next_state, reward, done, __ = update
         score += reward
         time.sleep(0.01)
 
@@ -123,23 +123,23 @@ for episode in range(100):
         experience_t['r_t+1'] = reward
         experience_t['s_t+1'] = next_state
         experience_t['done'] = done
-        bird_agent.memory.append(experience_t)
+        agent.memory.append(experience_t)
 
         # Update state
         state = next_state
 
-        if len(bird_agent.memory) > bird_agent.config['buffer size']:
-            bird_agent.memory.pop(0)  # remove oldest experience
+        if len(agent.memory) > agent_config['buffer size']:
+            agent.memory.pop(0)  # remove oldest experience
 
         if done:
             env.render()
             time.sleep(0.01)
 
     test_ep_score.append(env.get_game_score())
-    if episode % 10 == 0:
+    if episode % 2 == 0:
         print(episode, "- Score:", np.sum(test_ep_score))
 
 print("Score:", np.sum(test_ep_score))
 # Save the list to a `.npy` file
-np.save("baseline_testing.npy", test_ep_score)
+np.save("reward_testing.npy", test_ep_score)
 

@@ -65,17 +65,17 @@ class Agent:
         return torch.tensor(s_tA).to(torch.float32)
 
     def epsilon_t(self, count, n_episodes):
-        """Lets try out a dynamic epsilon
+        """Let us try out a dynamic epsilon
             Takes:
                 count -- int, the number of turns so far
             Returns:
                 float, a value for epsilon
         """
-        return self.config['epsilon']
-        # if count <= self.config['epsilon_burnin']:  # if we're still in the initial period...
-        #     return 1  # choose random action for sure
-        # else:
-        #     return 1 / ((n_episodes + 1) ** 0.5)  # otherwise reduce the size of epsilon
+        # return self.config['epsilon']
+        if count <= self.config['epsilon_burnin']:  # if we're still in the initial period...
+            return 1  # choose random action for sure
+        else:
+            return 1 / ((n_episodes + 1) ** 0.5)  # otherwise reduce the size of epsilon
 
     def pi(self, s_t, epsilon):
         """
@@ -84,10 +84,10 @@ class Agent:
                 s_t -- a torch tensor with the first 2 columns the state information and the last column the action
                 epsilon -- the probability of choosing a random action
         """
-        if np.random.uniform() < epsilon:  # if a random action is chosen...
+        if np.random.uniform() <= epsilon:  # if a random action is chosen...
             return np.random.choice(a=range(len([0, 1])))  # return the random action
         else:
-            return [0, 1][torch.argmax(self.Q(self.make_options(s_t)).flatten()).item()]   # otherwise return the action with the highest Q-value as predicted by the MLP
+            return [0, 1][torch.argmax(self.Q(self.make_options(s_t)))]  # otherwise return the action with the highest Q-value as predicted by the MLP
 
     def make_batch(self):
         """
@@ -101,8 +101,8 @@ class Agent:
             X.append(d['s_a'])  # record the state action pair
             y_t = d['r_t+1']  # compute the target
             if not d['done']:  # if this state didn't end the episode...
-                max_a_Q = self.Q_prime(self.make_options(d['s_t+1'])).max().item()
-                # max_a_Q = float(max(self.Q_prime(self.make_options(d['s_t+1']))))  # compute the future value using the target approximator
+                # max_a_Q = self.Q_prime(self.make_options(d['s_t+1'])).max().item()
+                max_a_Q = float(max(self.Q_prime(self.make_options(d['s_t+1']))))  # compute the future value using the target approximator
                 y_t = y_t + self.config['gamma'] * max_a_Q  # update the target with the future value
             y.append(y_t)  # record the target
         return [X, y]
