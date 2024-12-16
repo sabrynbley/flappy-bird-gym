@@ -74,6 +74,8 @@ class Agent:
         # return self.config['epsilon']
         if count <= self.config['epsilon_burnin']:  # if we're still in the initial period...
             return 1  # choose random action for sure
+        elif self.config['epsilon_burnin'] < count <= self.config['epsilon_burnin2']:
+            return 0.5  # 50-50 exploration-exploitation
         else:
             return 1 / ((n_episodes + 1) ** 0.5)  # otherwise reduce the size of epsilon
 

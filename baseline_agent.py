@@ -16,7 +16,8 @@ agent_config = {'gamma': 0.7,              # the discount factor
                 'B': 10,                    # set the batch size
                 'C': 20,                  # when to update the target approximator
                 'n_steps': 5,              # the number of steps to use to update
-                'epsilon_burnin': 18000}     # when to start burning epsilon value
+                'epsilon_burnin': 5000,      # when to start 50/50 exploration/exploitation
+                'epsilon_burnin2': 15000}  # when to start full-fledge burning the epsilon value
 bird_agent = agent.Agent(agent_config) #TODO
 # with open('baseline_agent.pkl', 'rb') as file:
 #     bird_agent = pickle.load(file)

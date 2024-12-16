@@ -16,10 +16,11 @@ agent_config = {'gamma': 0.7,              # the discount factor
                 'B': 10,                    # set the batch size
                 'C': 20,                  # when to update the target approximator
                 'n_steps': 5,              # the number of steps to use to update
-                'epsilon_burnin': 15000}     # when to start burning epsilon value
-bird_agent = agent.Agent(agent_config) #TODO
-# with open('seed_agent.pkl', 'rb') as file:
-#     bird_agent = pickle.load(file)
+                'epsilon_burnin': 1000,     # when to start 50/50 exploration/exploitation
+                'epsilon_burnin2': 6000}  # when to start full-fledge burning the epsilon value
+# bird_agent = agent.Agent(agent_config) #TODO
+with open('seed_agent.pkl', 'rb') as file:
+    bird_agent = pickle.load(file)
 
 # Train agent
 print("Training Agent:")
@@ -36,7 +37,7 @@ for episode in range(20000):
         env.render()
 
         # Generate action
-        action = bird_agent.pi(state, bird_agent.epsilon_t(turns, episode))  #   bird_agent.config['train_epsilon']
+        action = bird_agent.pi(state, bird_agent.epsilon_t(turns, episode))
 
         # Evolve environment
         update = env.step(action)
@@ -79,14 +80,14 @@ for episode in range(20000):
         print(episode, "- Score:", np.sum(train_ep_score))
 
 # Save the scores and trained agent to a file
-np.save("seed_training.npy", train_ep_score)
-np.save("seed_training_turns.npy", train_turns)
-with open('seed_agent.pkl', 'wb') as file:
+np.save("seed_training1.npy", train_ep_score)
+np.save("seed_training_turns1.npy", train_turns)
+with open('seed_agent1.pkl', 'wb') as file:
     pickle.dump(bird_agent, file)
 
 # To load the list from the `.npy` file: loaded_list = np.load("baseline_training.npy").tolist()
 
-with open('seed_agent.pkl', 'rb') as file:
+with open('seed_agent1.pkl', 'rb') as file:
     bird_agent = pickle.load(file)
 
 # Eval agent
@@ -141,6 +142,6 @@ for episode in range(100):
 
 print("Score:", np.sum(test_ep_score))
 # Save the list to a `.npy` file
-np.save("seed_testing.npy", test_ep_score)
-np.save("seed_testing_turns.npy", test_turns)
+np.save("seed_testing1.npy", test_ep_score)
+np.save("seed_testing_turns1.npy", test_turns)
 
