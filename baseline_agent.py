@@ -5,18 +5,18 @@ from flappy_bird_gym.envs.flappy_bird_env_simple import FlappyBirdEnvSimple
 import agent
 import pickle
 
-RENDER_SPEED = 0.00001
+RENDER_SPEED = 0.00000001
 # Create agent
 agent_config = {'gamma': 0.7,              # the discount factor
                 'train_epsilon': 0.5,            # the epsilon-greedy parameter for training
-                'eval_epsilon': 0.1,     # the epsilon-greedy parameter for evaluating
+                'eval_epsilon': 0.01,     # the epsilon-greedy parameter for evaluating
                 'alpha': 0.01,            # the learning rate
                 'hidden_size': 50,         # the hidden layer size
                 'buffer size': 1000,     # set the memory size
                 'B': 10,                    # set the batch size
                 'C': 20,                  # when to update the target approximator
                 'n_steps': 5,              # the number of steps to use to update
-                'epsilon_burnin': 200}     # when to start burning epsilon value
+                'epsilon_burnin': 18000}     # when to start burning epsilon value
 bird_agent = agent.Agent(agent_config) #TODO
 # with open('baseline_agent.pkl', 'rb') as file:
 #     bird_agent = pickle.load(file)
@@ -24,7 +24,8 @@ bird_agent = agent.Agent(agent_config) #TODO
 # Train agent
 print("Training Agent:")
 train_ep_score = []
-for episode in range(500):
+train_turns = []
+for episode in range(20000):
     env = FlappyBirdEnvSimple(bird_color="red", seed=False)
     state = env.reset()
 
@@ -40,9 +41,8 @@ for episode in range(500):
         # Evolve environment
         update = env.step(action)
         next_state, reward, done, __ = update
-        # if reward > 0:
-        #     reward = 1  # og always 1 (except when crashing) todo
-        reward = 1
+        if reward > 0:  # if agent didn't crash...
+            reward = 1  # it always gets a 1
         time.sleep(RENDER_SPEED)
 
         # Store experience
@@ -76,22 +76,25 @@ for episode in range(500):
             time.sleep(RENDER_SPEED)  # change to 0.5
 
     train_ep_score.append(env.get_game_score())
-    if episode % 10 == 0:
+    train_turns.append(turns)
+    if episode % 100 == 0:
         print(episode, "- Score:", np.sum(train_ep_score))
 
 # Save the scores and trained agent to a file
 np.save("baseline_training.npy", train_ep_score)
-with open('baseline_agent1.pkl', 'wb') as file:
+np.save("baseline_training_turns.npy", train_turns)
+with open('baseline_agent.pkl', 'wb') as file:
     pickle.dump(bird_agent, file)
 
 # To load the list from the `.npy` file: loaded_list = np.load("baseline_training.npy").tolist()
 
-with open('baseline_agent1.pkl', 'rb') as file:
+with open('baseline_agent.pkl', 'rb') as file:
     bird_agent = pickle.load(file)
 
 # Eval agent
 print("Testing Agent:")
 test_ep_score = []
+test_turns = []
 for episode in range(100):
     env = FlappyBirdEnvSimple(bird_color="red", seed=False)
     state = env.reset()
@@ -109,9 +112,9 @@ for episode in range(100):
         # Evolve environment
         update = env.step(action)
         next_state, reward, done, __ = update
-        # if reward > 0:
-        #     reward = 1  # og always 1 (except when crashing) # todo
-        reward = 1
+        if reward > 0:  # if agent didn't crash...
+            reward = 1  # it always gets a 1
+
         score += reward
         time.sleep(0.01)
 
@@ -136,10 +139,12 @@ for episode in range(100):
             time.sleep(0.01)
 
     test_ep_score.append(env.get_game_score())
-    if episode % 10 == 0:
+    test_turns.append(turns)
+    if episode % 100 == 0:
         print(episode, "- Score:", np.sum(test_ep_score))
 
 print("Score:", np.sum(test_ep_score))
 # Save the list to a `.npy` file
 np.save("baseline_testing.npy", test_ep_score)
+np.save("baseline_testing_turns.npy", test_turns)
 
