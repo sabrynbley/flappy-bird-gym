@@ -5,3 +5,4 @@ Final project for reinforcement learning :D
 We used a premade environment from https://github.com/Talendar/flappy-bird-gym with slight adjustments. 
   - Larger magnitude for bird gravity - this allows the gravity to overtake the up velocity and actually fall if it did not flap.
   - Reward function - this provides the agent with rewards for how close to the pipe gap the agent is
+  - Set Seed - this allowed the user to use a seed when creating the environment
